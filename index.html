@@ -8,7 +8,7 @@
 <p id="msg"></p>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const db=supabase.createClient("https://xskidmappzknphgjcsrf.supabase.co","PASTEKEYHERE");
+const db=supabase.createClient("https://xskidmappzknphgjcsrf.supabase.co","github.com/KololiDeveloper/kololi/edit/main/index.html");
 const msg=t=>document.getElementById("msg").textContent=t;
 async function signUp(){const{error}=await db.auth.signUp({email:email.value,password:pass.value});msg(error?error.message:"Check your email and tap the verification link, then log in.")}
 async function logIn(){const{error}=await db.auth.signInWithPassword({email:email.value,password:pass.value});if(error)msg(error.message);else show()}
