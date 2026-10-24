@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Upload - Kololi</title>
+<style>body{font-family:sans-serif;max-width:500px;margin:auto;padding:16px}input,select,button{width:100%;padding:12px;margin:6px 0;font-size:16px;box-sizing:border-box}</style>
+</head><body>
+<h1>Upload to Kololi</h1><p><a href="/">Back to search</a></p>
+<div id="form" style="display:none"><input id="t1" placeholder="Title"><input id="c1" placeholder="Course code (e.g. LIT 101)"><select id="cat"><option>Drama</option><option>Linguistics</option><option>Poetry</option><option>Prose</option><option>Other</option></select><input id="f1" type="file" accept="application/pdf"><button onclick="up()">Upload PDF</button></div>
+<p id="msg"></p>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const KEY="eyJhbGci...your real long key...";
+const db=supabase.createClient("https://xskidmappzknphgjcsrf.supabase.co",KEY);
+function msg(t){document.getElementById("msg").textContent=t}
+async function init(){const{data}=await db.auth.getSession();if(data.session)document.getElementById("form").style.display="block";else msg("Please log in first on the main page, then come back.")}
+async function up(){const f=f1.files[0];const t=t1.value.trim();if(!f||!t)return msg("Add a title and choose a PDF.");if(f.type!=="application/pdf")return msg("PDF files only.");if(f.size>20971520)return msg("File is over 20 MB.");const{data:s}=await db.auth.getSession();const path=s.session.user.id+"/"+Date.now()+".pdf";msg("Uploading...");const r=await db.storage.from("pdfs").upload(path,f,{contentType:"application/pdf"});if(r.error)return msg(r.error.message);const i=await db.from("materials").insert({title:t,course_code:c1.value.trim(),category:cat.value,file_path:path});if(i.error)return msg(i.error.message);msg("Uploaded! It will appear after approval.");t1.value="";c1.value="";f1.value=""}
+init();
+</script></body></html>
