@@ -7,10 +7,15 @@
 <p id="msg"></p>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const KEY="eyJhbGci...your real long key...";
-const db=supabase.createClient("https://xskidmappzknphgjcsrf.supabase.co",KEY);
+let db;
 function msg(t){document.getElementById("msg").textContent=t}
-async function init(){const{data}=await db.auth.getSession();if(data.session)document.getElementById("form").style.display="block";else msg("Please log in first on the main page, then come back.")}
+async function init(){
+const page=await (await fetch("/index.html")).text();
+const m=page.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/);
+if(!m)return msg("Setup problem: key not found in index.html.");
+db=supabase.createClient("https://xskidmappzknphgjcsrf.supabase.co",m[0]);
+const{data}=await db.auth.getSession();
+if(data.session)document.getElementById("form").style.display="block";else msg("Please log in first on the main page, then come back.")}
 async function up(){const f=f1.files[0];const t=t1.value.trim();if(!f||!t)return msg("Add a title and choose a PDF.");if(f.type!=="application/pdf")return msg("PDF files only.");if(f.size>20971520)return msg("File is over 20 MB.");const{data:s}=await db.auth.getSession();const path=s.session.user.id+"/"+Date.now()+".pdf";msg("Uploading...");const r=await db.storage.from("pdfs").upload(path,f,{contentType:"application/pdf"});if(r.error)return msg(r.error.message);const i=await db.from("materials").insert({title:t,course_code:c1.value.trim(),category:cat.value,file_path:path});if(i.error)return msg(i.error.message);msg("Uploaded! It will appear after approval.");t1.value="";c1.value="";f1.value=""}
 init();
 </script></body></html>
