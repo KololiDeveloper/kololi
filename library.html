@@ -21,8 +21,9 @@ async function loadFavs(){const{data}=await db.from("favorites").select("materia
 function row(m,extra){const li=document.createElement("li");li.textContent=m.title+" ("+(m.course_code||"")+") "+(extra||"");
 const d=document.createElement("button");d.textContent="Download";d.onclick=()=>get(m);
 const f=document.createElement("button");f.textContent=favs.has(m.id)?"★ Saved":"☆ Save";f.onclick=()=>fav(m,f);
-li.appendChild(d);li.appendChild(f);return li}
-async function show(w){msg("");const ul=document.getElementById("list");ul.innerHTML="";await loadFavs();let items=[];
+li.appendChild(d);li.appendChild(f);const r=document.createElement("button");r.textContent="Report";r.onclick=()=>report(m);li.appendChild(r);return li}
+async function report(m){const why=prompt("Why are you reporting this file? (e.g. copyrighted textbook)");if(!why)return;const r=await db.from("reports").insert({material_id:m.id,reason:why});msg(r.error?r.error.message:"Thanks, your report was sent.")}
+  async function show(w){msg("");const ul=document.getElementById("list");ul.innerHTML="";await loadFavs();let items=[];
 if(w==="all"){const{data,error}=await db.from("materials").select("*").eq("status","approved").order("created_at",{ascending:false});if(error)return msg(error.message);items=(data||[]).map(m=>row(m))}
 if(w==="fav"){const{data,error}=await db.from("favorites").select("materials(*)");if(error)return msg(error.message);items=(data||[]).filter(r=>r.materials).map(r=>row(r.materials))}
 if(w==="hist"){const{data,error}=await db.from("downloads").select("downloaded_at,materials(*)").order("downloaded_at",{ascending:false});if(error)return msg(error.message);items=(data||[]).filter(r=>r.materials).map(r=>row(r.materials,"- "+new Date(r.downloaded_at).toLocaleDateString()))}
