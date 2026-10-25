@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Library - Kololi</title>
+<style>body{font-family:sans-serif;max-width:500px;margin:auto;padding:16px}button{padding:10px;margin:4px 2px;font-size:16px}li{margin:10px 0;list-style:none;border:1px solid #ccc;padding:10px;border-radius:8px}ul{padding:0}</style>
+</head><body>
+<h1>My Library</h1><p><a href="/">Back to search</a></p>
+<div><button onclick="show('all')">All</button><button onclick="show('fav')">Favorites</button><button onclick="show('hist')">History</button></div>
+<ul id="list"></ul><p id="msg"></p>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+let db,favs=new Set();
+const msg=t=>document.getElementById("msg").textContent=t;
+async function init(){
+const page=await(await fetch("/index.html")).text();
+const m=page.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/);
+if(!m)return msg("Setup problem: key not found.");
+db=supabase.createClient("https://xskidmappzknphgjcsrf.supabase.co",m[0]);
+const{data}=await db.auth.getSession();
+if(!data.session)return msg("Please log in first on the main page.");
+show("all")}
+async function loadFavs(){const{data}=await db.from("favorites").select("material_id");favs=new Set((data||[]).map(r=>r.material_id))}
+function row(m,extra){const li=document.createElement("li");li.textContent=m.title+" ("+(m.course_code||"")+") "+(extra||"");
+const d=document.createElement("button");d.textContent="Download";d.onclick=()=>get(m);
+const f=document.createElement("button");f.textContent=favs.has(m.id)?"★ Saved":"☆ Save";f.onclick=()=>fav(m,f);
+li.appendChild(d);li.appendChild(f);return li}
+async function show(w){msg("");const ul=document.getElementById("list");ul.innerHTML="";await loadFavs();let items=[];
+if(w==="all"){const{data,error}=await db.from("materials").select("*").eq("status","approved").order("created_at",{ascending:false});if(error)return msg(error.message);items=(data||[]).map(m=>row(m))}
+if(w==="fav"){const{data,error}=await db.from("favorites").select("materials(*)");if(error)return msg(error.message);items=(data||[]).filter(r=>r.materials).map(r=>row(r.materials))}
+if(w==="hist"){const{data,error}=await db.from("downloads").select("downloaded_at,materials(*)").order("downloaded_at",{ascending:false});if(error)return msg(error.message);items=(data||[]).filter(r=>r.materials).map(r=>row(r.materials,"- "+new Date(r.downloaded_at).toLocaleDateString()))}
+if(!items.length)msg("Nothing here yet.");items.forEach(li=>ul.appendChild(li))}
+async function fav(m,b){if(favs.has(m.id)){await db.from("favorites").delete().eq("material_id",m.id);favs.delete(m.id);b.textContent="☆ Save"}else{const r=await db.from("favorites").insert({material_id:m.id});if(r.error)return msg(r.error.message);favs.add(m.id);b.textContent="★ Saved"}}
+async function get(m){const{data,error}=await db.storage.from("pdfs").createSignedUrl(m.file_path,60);if(error)return msg(error.message);await db.from("downloads").insert({material_id:m.id});window.open(data.signedUrl,"_blank")}
+init();
+</script></body></html>
