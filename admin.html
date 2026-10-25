@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin - Kololi</title>
+<style>body{font-family:sans-serif;max-width:500px;margin:auto;padding:16px}button{padding:10px;margin:4px 2px;font-size:16px}li{margin:10px 0;list-style:none;border:1px solid #ccc;padding:10px;border-radius:8px}ul{padding:0}</style>
+</head><body>
+<h1>Admin</h1><p><a href="/">Back to search</a></p>
+<div><button onclick="show('pending')">Pending</button><button onclick="show('reports')">Reports</button><button onclick="show('all')">All files</button></div>
+<ul id="list"></ul><p id="msg"></p>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+let db,cur="pending";
+const msg=t=>document.getElementById("msg").textContent=t;
+async function init(){
+const page=await(await fetch("/index.html")).text();
+const m=page.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/);
+if(!m)return msg("Setup problem: key not found.");
+db=supabase.createClient("https://xskidmappzknphgjcsrf.supabase.co",m[0]);
+const{data}=await db.auth.getSession();
+if(!data.session)return msg("Please log in first on the main page.");
+const a=await db.from("admins").select("user_id");
+if(!a.data||!a.data.length)return msg("Admins only.");
+show("pending")}
+async function view(p){const{data,error}=await db.storage.from("pdfs").createSignedUrl(p,60);if(error)return msg(error.message);window.open(data.signedUrl,"_blank")}
+async function setStatus(id,s){const r=await db.from("materials").update({status:s}).eq("id",id);if(r.error)return msg(r.error.message);show(cur)}
+function row(m,extra){const li=document.createElement("li");li.textContent=m.title+" ("+(m.course_code||"")+") ["+m.category+"] "+m.status+(extra?" - "+extra:"");
+const v=document.createElement("button");v.textContent="View";v.onclick=()=>view(m.file_path);
+const a=document.createElement("button");a.textContent="Approve";a.onclick=()=>setStatus(m.id,"approved");
+const r=document.createElement("button");r.textContent="Reject";r.onclick=()=>setStatus(m.id,"rejected");
+li.appendChild(v);li.appendChild(a);li.appendChild(r);return li}
+async function show(w){cur=w;msg("");const ul=document.getElementById("list");ul.innerHTML="";let items=[];
+if(w==="reports"){const{data,error}=await db.from("reports").select("reason,created_at,materials(*)").order("created_at",{ascending:false});if(error)return msg(error.message);items=(data||[]).filter(r=>r.materials).map(r=>row(r.materials,"Reported: "+r.reason))}
+else{let q=db.from("materials").select("*").order("created_at",{ascending:false});if(w==="pending")q=q.eq("status","pending");const{data,error}=await q;if(error)return msg(error.message);items=(data||[]).map(m=>row(m))}
+if(!items.length)msg("Nothing here.");items.forEach(li=>ul.appendChild(li))}
+init();
+</script></body></html>
