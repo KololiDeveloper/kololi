@@ -1,0 +1,15 @@
+html body{max-width:500px;margin:0 auto;padding:0 0 28px;background:#f4f9f8;font-family:Roboto,Arial,sans-serif;color:#1f2d2b;text-align:center}
+body::before{content:"";display:block;height:130px;background:linear-gradient(135deg,#4cb97a,#2f9fb4)}
+h1{position:relative;margin:0;padding:58px 16px 4px;font-size:28px}
+h1::before{content:"";position:absolute;top:-52px;left:50%;margin-left:-52px;width:104px;height:104px;border-radius:50%;background:#fff url(/kd-logo-512.png) center/cover;border:4px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+h1+p{margin:0 0 10px;color:#5b6b68}
+p:has(a){display:inline-block;margin:4px}
+p a{display:inline-block;padding:9px 18px;border-radius:999px;background:#fff;border:1px solid #cfe5df;color:#1d7f73;font-weight:600;text-decoration:none}
+#auth,#app{margin:14px;padding:14px;background:#fff;border-radius:18px;box-shadow:0 2px 12px rgba(20,60,50,.1)}
+input,select{border:1px solid #d5e6e1;border-radius:12px;background:#fbfdfc}
+button{border:0;border-radius:12px;background:#2fa37a;color:#fff;font-weight:600}
+#auth button+button,#app button:first-child{background:#e8f4f0;color:#1d7f73}
+ul{padding:0;margin:0}
+li{margin:10px 14px;padding:14px;text-align:left;background:#fff;border:0;border-radius:16px;box-shadow:0 2px 10px rgba(20,60,50,.1)}
+li button{width:auto;margin:8px 6px 0 0;padding:8px 14px;font-size:14px}
+#msg{margin:10px 16px;color:#b04040}
