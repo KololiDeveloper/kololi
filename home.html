@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Home - Kololi</title>
+<style>body{font-family:Roboto,Arial,sans-serif;margin:0;background:#f4f9f8;color:#1f2d2b}
+.top{background:linear-gradient(135deg,#4cb97a,#2f9fb4);padding:14px}
+.bar{display:flex;align-items:center;background:#fff;border-radius:999px;padding:0 6px 0 14px}
+.bar input{flex:1;border:0;outline:0;padding:12px 6px;font-size:16px;background:none;min-width:0}
+.bar button{border:0;background:none;font-size:20px;padding:8px 10px}
+h3{margin:18px 14px 8px;font-size:16px}
+.row{display:flex;gap:10px;overflow-x:auto;padding:0 14px 4px}
+.card{flex:none;width:150px;background:#fff;border-radius:16px;padding:12px;box-shadow:0 2px 10px rgba(20,60,50,.1)}
+.card b{display:block;font-size:15px;margin-bottom:2px;word-break:break-word}
+.card small{color:#5b6b68;display:block;margin-bottom:8px}
+.card button{border:0;border-radius:10px;padding:7px 12px;background:#2fa37a;color:#fff;font-weight:600;font-size:13px}
+.res .card{width:auto;margin:0 14px 10px}
+.empty{margin:0 14px;color:#5b6b68;font-size:14px}
+#msg{margin:14px;color:#b04040}</style></head><body>
+<div class="top"><div class="bar"><input id="q" placeholder="Search by title or course code" oninput="find()"><button onclick="mic()">🎤</button></div></div>
+<div id="res" class="res" style="display:none"></div>
+<div id="home"><h3>Recent files</h3><div class="row" id="recent"></div><h3>My Bookmarks</h3><div class="row" id="marks"></div></div>
+<p id="msg"></p>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+let db,all=[];
+const msg=t=>document.getElementById("msg").textContent=t;
+const n=s=>(s||"").toLowerCase().replace(/\s+/g,"");
+function card(m){const d=document.createElement("div");d.className="card";d.innerHTML="<b></b><small></small>";d.children[0].textContent=m.title;d.children[1].textContent=m.course_code||m.category;const b=document.createElement("button");b.textContent="Download";b.onclick=()=>get(m);d.appendChild(b);return d}
+function fill(id,list,empty){const el=document.getElementById(id);el.innerHTML="";if(!list.length){el.innerHTML='<p class="empty"></p>';el.firstChild.textContent=empty;return}list.forEach(m=>el.appendChild(card(m)))}
+async function init(){
+const page=await(await fetch("/index.html")).text();
+const mm=page.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/);
+if(!mm)return msg("Setup problem: key not found.");
+db=supabase.createClient("https://xskidmappzknphgjcsrf.supabase.co",mm[0]);
+const{data}=await db.auth.getSession();
+if(!data.session)return msg("Please log in first on the main page.");
+const r=await db.from("materials").select("*").eq("status","approved").order("created_at",{ascending:false});
+if(r.error)return msg(r.error.message);
+all=r.data||[];
+fill("recent",all.slice(0,10),"No files yet.");
+const f=await db.from("favorites").select("materials(*)");
+fill("marks",(f.data||[]).filter(x=>x.materials).map(x=>x.materials),"Save a file to bookmark it.")}
+function find(){const t=n(document.getElementById("q").value);const res=document.getElementById("res"),home=document.getElementById("home");
+if(!t){res.style.display="none";home.style.display="block";return}
+home.style.display="none";res.style.display="block";res.innerHTML="";
+const list=all.filter(m=>n(m.title).includes(t)||n(m.course_code).includes(t));
+if(!list.length){res.innerHTML="<h3>No materials found.</h3>";return}
+list.forEach(m=>res.appendChild(card(m)))}
+function mic(){const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R)return msg("Voice search is not supported on this phone.");const r=new R();r.lang="en-US";r.onresult=e=>{document.getElementById("q").value=e.results[0][0].transcript;find()};r.onerror=()=>msg("Could not hear you. Try again.");r.start()}
+async function get(m){const{data,error}=await db.storage.from("pdfs").createSignedUrl(m.file_path,60);if(error)return msg(error.message);await db.from("downloads").insert({material_id:m.id});window.open(data.signedUrl,"_blank")}
+init();
+</script>
+<script src="/nav.js"></script>
+</body></html>
