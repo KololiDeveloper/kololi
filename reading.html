@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reading list - Kololi</title>
+<style>body{font-family:Roboto,Arial,sans-serif;margin:0;background:#f4f9f8;color:#1f2d2b}
+.top{background:linear-gradient(135deg,#4cb97a,#2f9fb4);padding:16px 14px 12px;color:#fff}
+.top h2{margin:0 0 10px}
+.bar{display:flex;background:#fff;border-radius:999px;padding:0 6px 0 14px}
+.bar input{flex:1;border:0;outline:0;padding:12px 6px;font-size:16px;background:none;min-width:0}
+.bar button{border:0;background:none;font-size:18px;padding:8px 10px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 14px}
+.chips button{flex:none;border:0;border-radius:999px;padding:8px 16px;background:#e8f4f0;color:#1d7f73;font-weight:600;font-size:14px}
+.chips button.on{background:#2fa37a;color:#fff}
+.note{margin:0 14px 12px;color:#5b6b68;font-size:13px}
+.doc{display:flex;gap:12px;align-items:center;background:#fff;border-radius:12px;margin:0 14px 10px;padding:12px;box-shadow:0 2px 10px rgba(20,60,50,.1);cursor:pointer}
+.ic{flex:none;width:40px;height:52px;border-radius:5px 12px 5px 5px;background:linear-gradient(135deg,#4cb97a,#2f9fb4);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;box-sizing:border-box}
+.doc .info{flex:1;min-width:0}
+.doc b{display:block;font-size:15px;line-height:1.25}
+.doc small{display:block;color:#5b6b68;margin-top:2px}
+.doc .go{flex:none;color:#2fa37a;font-weight:700;font-size:13px}
+#more{display:none;margin:6px 14px 14px;width:calc(100% - 28px);border:0;border-radius:12px;padding:12px;background:#e8f4f0;color:#1d7f73;font-weight:600;font-size:15px}
+#msg{margin:14px;color:#5b6b68}</style></head><body>
+<div class="top"><h2>Reading list</h2><div class="bar"><input id="q" placeholder="Search a title or author (e.g. Hamlet)"><button onclick="searchNow()">🔍</button></div></div>
+<div class="chips" id="chips"></div>
+<p class="note">Free classics you can read online. Tap a title to read it.</p>
+<div id="list"></div><p id="msg"></p><button id="more" onclick="loadMore()">Load more</button>
+<script>
+const TOPICS=["Drama","Poetry","Fiction","Short stories","Essays","Literature"];
+let topic=TOPICS[0],term="",nextUrl=null,busy=false;
+const $=id=>document.getElementById(id);
+const msg=t=>$("msg").textContent=t;
+function startUrl(){return "https://gutendex.com/books?languages=en&"+(term?"search="+encodeURIComponent(term):"topic="+encodeURIComponent(topic))}
+function readUrl(b){const f=b.formats||{};const k=Object.keys(f).find(x=>x.indexOf("text/html")===0);let u=k?f[k]:"https://www.gutenberg.org/ebooks/"+b.id;return u.replace(/^http:/,"https:")}
+function add(b){const d=document.createElement("div");d.className="doc";
+const ic=document.createElement("div");ic.className="ic";ic.textContent="DOC";
+const info=document.createElement("div");info.className="info";
+const t=document.createElement("b");t.textContent=b.title;
+const a=document.createElement("small");a.textContent=(b.authors&&b.authors[0])?b.authors[0].name.split(", ").reverse().join(" "):"Unknown author";
+info.appendChild(t);info.appendChild(a);
+const g=document.createElement("div");g.className="go";g.textContent="Read";
+d.appendChild(ic);d.appendChild(info);d.appendChild(g);
+d.onclick=()=>window.open(readUrl(b),"_blank");$("list").appendChild(d)}
+async function load(u,append){
+if(!navigator.onLine){msg("You are offline. Connect to the internet to see the reading list.");return}
+if(busy)return;busy=true;msg("Loading...");
+try{const r=await fetch(u);if(!r.ok)throw new Error("bad");const d=await r.json();
+if(!append)$("list").innerHTML="";
+nextUrl=d.next?d.next.replace(/^http:/,"https:"):null;
+d.results.forEach(add);
+msg($("list").children.length?"":"Nothing found. Try another word.");
+$("more").style.display=nextUrl?"block":"none"}
+catch(e){msg("Could not load the list. Check your internet and try again.")}
+busy=false}
+function loadMore(){if(nextUrl)load(nextUrl,true)}
+function renderChips(){const c=$("chips");c.innerHTML="";TOPICS.forEach(x=>{const b=document.createElement("button");b.textContent=x;b.className=(!term&&x===topic)?"on":"";b.onclick=()=>{topic=x;term="";$("q").value="";renderChips();load(startUrl(),false)};c.appendChild(b)})}
+function searchNow(){term=$("q").value.trim();renderChips();load(startUrl(),false)}
+$("q").addEventListener("keydown",e=>{if(e.key==="Enter")searchNow()});
+window.addEventListener("online",()=>load(startUrl(),false));
+const pq=new URLSearchParams(location.search).get("q");
+if(pq){term=pq;$("q").value=pq}
+renderChips();load(startUrl(),false);
+</script>
+<script src="/nav.js"></script>
+</body></html>
