@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "dev.workers.benardbarasakololi.kololi.twa",
+        "sha256_cert_fingerprints": ["E6:11:47:33:AC:27:9A:DF:59:F4:C3:90:0F:86:B1:49:B8:7B:CB:48:65:E1:AD:ED:22:DD:B9:0F:D6:FC:37:16"]
+      }
+    }]
