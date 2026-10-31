@@ -32,3 +32,4 @@ async function fav(m,b){if(favs.has(m.id)){await db.from("favorites").delete().e
 async function get(m){const{data,error}=await db.storage.from("pdfs").createSignedUrl(m.file_path,60);if(error)return msg(error.message);await db.from("downloads").insert({material_id:m.id});window.open(data.signedUrl,"_blank")}
 init();
 </script></body></html>
+<script src="/nav.js"></script>
