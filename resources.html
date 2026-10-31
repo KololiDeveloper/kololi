@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>E-resources - Kololi</title>
+<style>body{font-family:Roboto,Arial,sans-serif;margin:0;background:#f4f9f8;color:#1f2d2b}
+.top{background:linear-gradient(135deg,#4cb97a,#2f9fb4);padding:18px 14px 14px;color:#fff}
+.top h2{margin:0 0 10px}
+#q{width:100%;box-sizing:border-box;padding:12px 14px;border:0;border-radius:999px;font-size:16px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 14px}
+.chips button{flex:none;border:0;border-radius:999px;padding:8px 16px;background:#e8f4f0;color:#1d7f73;font-weight:600;font-size:14px}
+.chips button.on{background:#2fa37a;color:#fff}
+ul{list-style:none;margin:0;padding:0 14px}
+li{background:#fff;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(20,60,50,.1)}
+li b{display:block;font-size:16px}li small{color:#5b6b68}
+li button{border:0;border-radius:12px;padding:8px 14px;margin:10px 6px 0 0;font-weight:600;font-size:14px;background:#2fa37a;color:#fff}
+li button.s{background:#e8f4f0;color:#1d7f73}
+#msg{margin:14px;color:#b04040}</style></head><body>
+<div class="top"><h2>E-resources</h2><input id="q" placeholder="Search by title or course code" oninput="render()"></div>
+<div class="chips" id="chips"></div>
+<ul id="list"></ul><p id="msg"></p>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+let db,all=[],favs=new Set(),cat="All";
+const msg=t=>document.getElementById("msg").textContent=t;
+const n=s=>(s||"").toLowerCase().replace(/\s+/g,"");
+async function init(){
+const page=await(await fetch("/index.html")).text();
+const m=page.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/);
+if(!m)return msg("Setup problem: key not found.");
+db=supabase.createClient("https://xskidmappzknphgjcsrf.supabase.co",m[0]);
+const{data}=await db.auth.getSession();
+if(!data.session)return msg("Please log in first on the main page.");
+const r=await db.from("materials").select("*").eq("status","approved").order("created_at",{ascending:false});
+if(r.error)return msg(r.error.message);
+all=r.data||[];
+const f=await db.from("favorites").select("material_id");
+favs=new Set((f.data||[]).map(x=>x.material_id));
+const box=document.getElementById("chips");
+["All","Drama","Linguistics","Poetry","Prose","Other"].forEach(c=>{const b=document.createElement("button");b.textContent=c;b.onclick=()=>{cat=c;[...box.children].forEach(x=>x.className=x.textContent===c?"on":"");render()};if(c==="All")b.className="on";box.appendChild(b)});
+render()}
+function render(){
+const t=n(document.getElementById("q").value);const ul=document.getElementById("list");ul.innerHTML="";
+const items=all.filter(m=>(cat==="All"||m.category===cat)&&(!t||n(m.title).includes(t)||n(m.course_code).includes(t)));
+msg(items.length?"":"Nothing here yet.");
+items.forEach(m=>{const li=document.createElement("li");
+li.innerHTML="<b></b><small></small><br>";li.children[0].textContent=m.title;li.children[1].textContent=(m.course_code||"No code")+" - "+m.category;
+const d=document.createElement("button");d.textContent="Download";d.onclick=()=>get(m);
+const s=document.createElement("button");s.className="s";s.textContent=favs.has(m.id)?"★ Saved":"☆ Save";s.onclick=()=>fav(m,s);
+li.appendChild(d);li.appendChild(s);ul.appendChild(li)})}
+async function fav(m,b){if(favs.has(m.id)){await db.from("favorites").delete().eq("material_id",m.id);favs.delete(m.id);b.textContent="☆ Save"}else{const r=await db.from("favorites").insert({material_id:m.id});if(r.error)return msg(r.error.message);favs.add(m.id);b.textContent="★ Saved"}}
+async function get(m){const{data,error}=await db.storage.from("pdfs").createSignedUrl(m.file_path,60);if(error)return msg(error.message);await db.from("downloads").insert({material_id:m.id});window.open(data.signedUrl,"_blank")}
+init();
+</script>
+<script src="/nav.js"></script>
+</body></html>
