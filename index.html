@@ -18,3 +18,4 @@ async function search(){const n=s=>(s||"").toLowerCase().replace(/\s+/g,"");cons
 async function get(m){const{data,error}=await db.storage.from("pdfs").createSignedUrl(m.file_path,60);if(error)return msg(error.message);await db.from("downloads").insert({material_id:m.id});window.open(data.signedUrl,"_blank")}
 show();
 </script></body></html>
+<script src="/nav.js"></script>
