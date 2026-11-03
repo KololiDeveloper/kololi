@@ -1,8 +1,10 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "dev.workers.benardbarasakololi.kololi.twa",
-        "sha256_cert_fingerprints": ["E6:11:47:33:AC:27:9A:DF:59:F4:C3:90:0F:86:B1:49:B8:7B:CB:48:65:E1:AD:ED:22:DD:B9:0F:D6:FC:37:16"]
-      }
-    }]
+Keep this file and signing.keystore in a safe place. You'll need these files if you want to upload future versions of your PWA to the Google Play Store.
+
+Key store file: signing.keystore
+Key store password: Mxz2YufRlmfB
+Key alias: my-key-alias
+Key password: Mxz2YufRlmfB
+Signer's full name: Benard Kololi
+Signer's organization: Kololi
+Signer's organizational unit: Engineering
+Signer's country code: KE
