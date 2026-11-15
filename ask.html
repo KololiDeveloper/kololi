@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ask AI - Kololi</title>
+<style>html body{padding-top:0!important}#kgs{display:none!important}
+body{font-family:Roboto,Arial,sans-serif;margin:0;background:#f4f9f8;color:#1f2d2b}
+.top{background:linear-gradient(135deg,#4cb97a,#2f9fb4);padding:18px 14px;color:#fff}
+.top h2{margin:0 0 4px}.top p{margin:0;font-size:14px;opacity:.9}
+.box{margin:14px;background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 10px rgba(20,60,50,.1)}
+.box textarea{width:100%;box-sizing:border-box;border:1px solid #d5e6e1;border-radius:12px;padding:12px;font-size:16px;font-family:inherit;resize:vertical}
+.box button{width:100%;margin-top:10px;padding:13px;border:0;border-radius:12px;background:#2fa37a;color:#fff;font-weight:600;font-size:16px}
+.ans{margin:0 14px 14px;background:#fff;border-radius:16px;padding:14px;white-space:pre-wrap;line-height:1.5;display:none;box-shadow:0 2px 10px rgba(20,60,50,.1)}
+.note{margin:0 14px 14px;color:#5b6b68;font-size:13px}
+html.kdark .box,html.kdark .ans{background:#182a26;color:#e6f2ee}html.kdark .box textarea{background:#122320;color:#e6f2ee;border-color:#2b4a43}</style></head><body>
+<div class="top"><h2>Ask AI</h2><p>A study helper powered by Gemini</p></div>
+<div class="box"><textarea id="q" rows="4" placeholder="Ask about a poem, play, author or concept"></textarea><button id="go" onclick="ask()">Ask</button></div>
+<div id="out" class="ans"></div>
+<p class="note">AI can make mistakes. Check facts and quotes against your course texts, and don't type personal information.</p>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+let db;
+const $=id=>document.getElementById(id);
+function show(t){const o=$("out");o.style.display="block";o.textContent=t}
+async function init(){
+const page=await(await fetch("/index.html")).text();
+const m=page.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/);
+if(!m)return show("Setup problem: key not found.");
+db=supabase.createClient("https://xskidmappzknphgjcsrf.supabase.co",m[0]);
+const{data}=await db.auth.getSession();
+if(!data.session)show("Please log in first on the main page.")}
+async function ask(){const q=$("q").value.trim();if(!q||!db)return;
+const{data:s}=await db.auth.getSession();if(!s.session)return show("Please log in first on the main page.");
+$("go").disabled=true;show("Thinking...");
+try{const{data,error}=await db.functions.invoke("ask-gemini",{body:{question:q}});
+if(error){let msg="Could not reach the AI. Try again later.";try{const j=await error.context.json();if(j&&j.error)msg=j.error}catch(e){}show(msg)}
+else show(data&&data.answer?data.answer:"No answer. Try rephrasing.")}
+catch(e){show("Could not reach the AI. Try again later.")}
+$("go").disabled=false}
+init();
+</script>
+<script src="/nav.js"></script>
+</body></html>
