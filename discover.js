@@ -12,7 +12,7 @@ if(!home||!q||!res)return;
 var st=document.createElement("style");
 st.textContent=".kbox{display:flex;align-items:center;gap:14px;background:#fff;border-radius:18px;margin:0 14px 12px;padding:16px;min-height:84px;box-shadow:0 3px 12px rgba(20,60,50,.12);cursor:pointer;color:#1f2d2b}.kbox .bd{flex:none;width:64px;height:64px;border-radius:16px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px}.kbox .tx{flex:1;min-width:0}.kbox b{display:block;font-size:17px;line-height:1.25}.kbox small{display:block;color:#5b6b68;margin-top:3px;word-break:break-all}.kbox .ar{flex:none;color:#2fa37a;font-size:24px}"
 +"#ktick{overflow:hidden;background:#f4f9f8;padding:14px 0;white-space:nowrap}#ktick .trk{display:inline-block;animation:kmr 110s linear infinite}#ktick:active .trk{animation-play-state:paused}@keyframes kmr{from{transform:translateX(-100%)}to{transform:translateX(100vw)}}#ktick .ch{display:inline-flex;align-items:center;gap:12px;margin-right:16px;padding:10px 24px 10px 10px;border-radius:999px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.2);font:700 17px Roboto,Arial,sans-serif;cursor:pointer;animation:kpopin .6s ease both}#ktick .ch i{font-style:normal;width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}@keyframes kpopin{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}"
-+"#kmy{margin:0 0 20px}#kmy .gr{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 10px;padding:0 14px}#kmy .tile{text-align:center;cursor:pointer;color:#1f2d2b}#kmy .sq{width:100%;aspect-ratio:1/1;border-radius:20px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;box-shadow:0 3px 10px rgba(0,0,0,.2)}#kmy .tile span{display:block;margin-top:6px;font-size:11px;line-height:1.2;max-height:2.4em;overflow:hidden;word-break:break-word}"
++"#kmy{margin:0 0 8px}#kmy .gr{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 10px;padding:0 14px}#kmy .tile{text-align:center;cursor:pointer;color:#1f2d2b}#kmy .sq{width:100%;aspect-ratio:1/1;border-radius:20px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;box-shadow:0 3px 10px rgba(0,0,0,.2)}#kmy .tile span{display:block;margin-top:6px;font-size:11px;line-height:1.2;max-height:2.4em;overflow:hidden;word-break:break-word}"
 +"html.kdark .kbox,html.kdark #kmy .tile{background:transparent;color:#e6f2ee}html.kdark .kbox{background:#182a26}html.kdark .kbox small{color:#9fb8b0}html.kdark #ktick{background:#0f1c19}";
 document.head.appendChild(st);
 var tk=mk("div");tk.id="ktick";var trk=mk("div","trk");
@@ -20,6 +20,8 @@ ticker.forEach(function(l){var c=mk("span","ch");c.style.background=l[3];var b=m
 tk.appendChild(trk);
 var top=document.querySelector(".top");
 if(top&&top.parentNode)top.parentNode.insertBefore(tk,top.nextSibling);else home.insertBefore(tk,home.firstChild);
+var my=mk("div");my.id="kmy";
+if(tk.parentNode)tk.parentNode.insertBefore(my,tk.nextSibling);else home.insertBefore(my,home.firstChild);
 function box(l,i){var d=mk("div","kbox");var b=mk("div","bd",l[0]);b.style.background=grads[i%4];var t=mk("div","tx");t.appendChild(mk("b","",l[1]));t.appendChild(mk("small","",l[3]));d.appendChild(b);d.appendChild(t);d.appendChild(mk("div","ar","›"));d.onclick=function(){go(l[2])};return d}
 var rl=mk("a","kbox");rl.href="/reading.html";rl.style.textDecoration="none";
 var rb=mk("div","bd","READ");rb.style.background=grads[0];rb.style.fontSize="14px";var rt=mk("div","tx");rt.appendChild(mk("b","","Reading list"));rt.appendChild(mk("small","","Free English and Literature books and papers"));rl.appendChild(rb);rl.appendChild(rt);rl.appendChild(mk("div","ar","›"));
@@ -29,14 +31,13 @@ unis.forEach(function(l,i){home.appendChild(box(l,i))});
 home.appendChild(mk("h3","","Free libraries"));
 libs.forEach(function(l,i){home.appendChild(box(l,i+1))});
 home.appendChild(mk("p","empty","Each box opens that site's own website. Kololi does not copy their files."));
-var my=mk("div");my.id="kmy";home.appendChild(my);
 function renderMy(list){my.innerHTML="";my.appendChild(mk("h3","","My documents"));var g=mk("div","gr");
 list.forEach(function(m){var t=mk("div","tile");var col=catCol[m.category]||catCol.Other;
 var sq=mk("div","sq",(m.course_code||m.title||"?").replace(/[^A-Za-z0-9]/g,"").slice(0,3).toUpperCase());sq.style.background=col;
 t.appendChild(sq);t.appendChild(mk("span","",m.title));t.onclick=function(){if(typeof get==="function")get(m)};g.appendChild(t)});
 my.appendChild(g)}
 var tries=0;var iv=setInterval(function(){tries++;try{if(typeof all!=="undefined"&&all&&all.length){clearInterval(iv);renderMy(all)}}catch(e){}if(tries>40)clearInterval(iv)},500);
-q.addEventListener("input",function(){var t=q.value.trim();if(!t)return;
+q.addEventListener("input",function(){var t=q.value.trim();my.style.display=t?"none":"";if(!t)return;
 res.appendChild(mk("h3","",'Search beyond Kololi for "'+t+'"'));
 var r0=mk("div","item");r0.appendChild(mk("div","dot c0","READ"));var f0=mk("div","info");f0.appendChild(mk("b","","Reading list"));f0.appendChild(mk("small","","Free books and papers"));r0.appendChild(f0);var b0=mk("button","","Open");b0.onclick=function(){location.href="/reading.html?q="+encodeURIComponent(t)};r0.appendChild(b0);res.appendChild(r0);
 libs.forEach(function(l,i){var r=mk("div","item");r.appendChild(mk("div","dot c"+((i+1)%4),l[0]));var f=mk("div","info");f.appendChild(mk("b","",l[1]));f.appendChild(mk("small","","Opens their website"));r.appendChild(f);var b=mk("button","","Search");b.onclick=function(){go(url(l,t))};r.appendChild(b);res.appendChild(r)})});
