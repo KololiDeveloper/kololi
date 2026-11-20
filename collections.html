@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Collections - Kololi</title>
+<style>html body{padding-top:0!important}#kgs{display:none!important}
+body{font-family:Roboto,Arial,sans-serif;margin:0;background:#f4f9f8;color:#1f2d2b}
+.top{background:linear-gradient(135deg,#4cb97a,#2f9fb4);padding:16px 14px 12px;color:#fff}
+.top h2{margin:0 0 10px}
+.bar{display:flex;background:#fff;border-radius:999px;padding:0 6px 0 14px}
+.bar input{flex:1;border:0;outline:0;padding:12px 6px;font-size:16px;background:none;min-width:0}
+.bar button{border:0;background:none;font-size:18px;padding:8px 10px}
+.tabs{display:flex;gap:8px;margin-top:12px}.tabs button{flex:1;border:0;border-radius:999px;padding:9px;background:rgba(255,255,255,.25);color:#fff;font-weight:600;font-size:14px}.tabs button.on{background:#fff;color:#1d7f73}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 14px}.chips button{flex:none;border:0;border-radius:999px;padding:7px 14px;background:#e8f4f0;color:#1d7f73;font-weight:600;font-size:13px}.chips button.on{background:#2fa37a;color:#fff}
+.tools{display:flex;gap:8px;margin:0 14px}.tools button{flex:1;border:0;border-radius:12px;padding:10px;background:#fff;color:#1d7f73;font-weight:600;font-size:14px;box-shadow:0 2px 8px rgba(20,60,50,.1)}
+#add{display:none;margin:12px 14px 0;background:#fff;border-radius:14px;padding:12px;box-shadow:0 2px 8px rgba(20,60,50,.1)}
+#add input{width:100%;box-sizing:border-box;margin-bottom:8px;padding:11px;border:1px solid #d5e6e1;border-radius:10px;font-size:15px}
+#add button{width:100%;padding:11px;border:0;border-radius:10px;background:#2fa37a;color:#fff;font-weight:600;font-size:15px}
+#list{padding:12px 14px 0}
+#list.list .c{display:block;margin-bottom:10px}
+#list.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.c{background:#fff;border-radius:14px;padding:12px;box-shadow:0 2px 10px rgba(20,60,50,.1)}
+.k{display:inline-block;padding:2px 8px;border-radius:6px;color:#fff;font-size:11px;font-weight:700;margin-bottom:6px}
+.k.pdf{background:#c0392b}.k.link{background:#2980b9}
+.c b{display:block;font-size:15px;line-height:1.3;word-break:break-word}.c small{display:block;color:#5b6b68;margin-top:3px}
+.tg{display:inline-block;margin-top:6px;padding:2px 8px;border-radius:999px;background:#e8f4f0;color:#1d7f73;font-size:12px}
+.a{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.a button{border:0;border-radius:9px;padding:7px 10px;background:#e8f4f0;color:#1d7f73;font-weight:600;font-size:12px}.a button.o{background:#2fa37a;color:#fff}.a button.d{background:#fdecea;color:#b04040}
+#msg{margin:14px;color:#5b6b68}
+html.kdark .c,html.kdark .tools button,html.kdark #add{background:#182a26;color:#e6f2ee}html.kdark #add input{background:#122320;color:#e6f2ee;border-color:#2b4a43}</style></head><body>
+<div class="top"><h2>Collections</h2><div class="bar"><input id="q" placeholder="Search your collection" oninput="render()"><button onclick="render()">🔍</button></div>
+<div class="tabs"><button id="t-all" class="on" onclick="setTab('all')">All</button><button id="t-pdf" onclick="setTab('pdf')">PDFs</button><button id="t-link" onclick="setTab('link')">Links</button></div></div>
+<div class="chips" id="chips"></div>
+<div class="tools"><button onclick="toggleAdd()">+ Add link</button><button id="vb" onclick="toggleView()">Grid view</button></div>
+<div id="add"><input id="lt" placeholder="Title (optional)"><input id="lu" placeholder="Web address (https://...)"><input id="lg" placeholder="Tag (optional)"><button onclick="addLink()">Save link</button></div>
+<div id="list" class="list"></div><p id="msg"></p>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+let db,items=[],tab="all",view="list",tagF="";
+const $=id=>document.getElementById(id);
+const msg=t=>$("msg").textContent=t;
+function host(u){try{return new URL(u).hostname.replace(/^www\./,"")}catch(e){return u}}
+async function init(){
+const page=await(await fetch("/index.html")).text();
+const m=page.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/);
+if(!m)return msg("Setup problem: key not found.");
+db=supabase.createClient("https://xskidmappzknphgjcsrf.supabase.co",m[0]);
+const{data}=await db.auth.getSession();
+if(!data.session)return msg("Please log in first on the main page.");
+load()}
+async function load(){
+const f=await db.from("favorites").select("tag,materials(*)");
+const l=await db.from("saved_links").select("*").order("created_at",{ascending:false});
+if(f.error)return msg(f.error.message);
+items=[];
+(f.data||[]).filter(x=>x.materials).forEach(x=>items.push({kind:"pdf",id:x.materials.id,title:x.materials.title,sub:(x.materials.course_code||"")+" "+x.materials.category,tag:x.tag||"",m:x.materials}));
+(l.data||[]).forEach(x=>items.push({kind:"link",id:x.id,title:x.title,sub:host(x.url),tag:x.tag||"",url:x.url}));
+render()}
+function chips(){const c=$("chips");c.innerHTML="";const tags=[...new Set(items.map(i=>i.tag).filter(Boolean))];
+const mkb=(t,v)=>{const b=document.createElement("button");b.textContent=t;b.className=tagF===v?"on":"";b.onclick=()=>{tagF=v;render()};c.appendChild(b)};
+mkb("All tags","");tags.forEach(t=>mkb("#"+t,t))}
+function render(){chips();const q=$("q").value.trim().toLowerCase();const box=$("list");box.className=view;box.innerHTML="";
+const arr=items.filter(i=>(tab==="all"||i.kind===tab)&&(!tagF||i.tag===tagF)&&(!q||(i.title+" "+i.sub+" "+i.tag).toLowerCase().includes(q)));
+if(!arr.length){msg("Nothing here yet. Save a file with ☆ Save, or tap + Add link.");return}msg("");
+arr.forEach(i=>box.appendChild(card(i)))}
+function card(i){const c=document.createElement("div");c.className="c";
+const k=document.createElement("span");k.className="k "+i.kind;k.textContent=i.kind==="pdf"?"PDF":"LINK";c.appendChild(k);
+const b=document.createElement("b");b.textContent=i.title;c.appendChild(b);
+const s=document.createElement("small");s.textContent=i.sub;c.appendChild(s);
+if(i.tag){const t=document.createElement("span");t.className="tg";t.textContent="#"+i.tag;c.appendChild(t)}
+const a=document.createElement("div");a.className="a";
+const o=document.createElement("button");o.className="o";o.textContent=i.kind==="pdf"?"Download":"Open";o.onclick=()=>open_(i);
+const t=document.createElement("button");t.textContent="Tag";t.onclick=()=>setTag(i);
+const d=document.createElement("button");d.className="d";d.textContent="Remove";d.onclick=()=>remove(i);
+a.appendChild(o);a.appendChild(t);a.appendChild(d);c.appendChild(a);return c}
+async function open_(i){if(i.kind==="link")return window.open(i.url,"_blank");
+const{data,error}=await db.storage.from("pdfs").createSignedUrl(i.m.file_path,60);if(error)return msg(error.message);
+await db.from("downloads").insert({material_id:i.id});window.open(data.signedUrl,"_blank")}
+async function setTag(i){const v=prompt("Tag for this item (leave empty to clear):",i.tag||"");if(v===null)return;const tag=v.trim().slice(0,30);
+const r=i.kind==="pdf"?await db.from("favorites").update({tag:tag}).eq("material_id",i.id):await db.from("saved_links").update({tag:tag}).eq("id",i.id);
+if(r.error)return msg(r.error.message);load()}
+async function remove(i){if(!confirm("Remove this from your collection?"))return;
+const r=i.kind==="pdf"?await db.from("favorites").delete().eq("material_id",i.id):await db.from("saved_links").delete().eq("id",i.id);
+if(r.error)return msg(r.error.message);load()}
+function toggleAdd(){const a=$("add");a.style.display=a.style.display==="block"?"none":"block"}
+async function addLink(){let u=$("lu").value.trim();if(!/^https?:\/\//i.test(u))u="https://"+u;if(!u||u==="https://")return msg("Type a web address.");
+const title=$("lt").value.trim()||host(u);const tag=$("lg").value.trim().slice(0,30);
+const r=await db.from("saved_links").insert({title:title,url:u,tag:tag});if(r.error)return msg(r.error.message);
+$("lt").value="";$("lu").value="";$("lg").value="";load()}
+function setTab(t){tab=t;["all","pdf","link"].forEach(x=>$("t-"+x).className=x===t?"on":"");render()}
+function toggleView(){view=view==="list"?"grid":"list";$("vb").textContent=view==="list"?"Grid view":"List view";render()}
+init();
+</script>
+<script src="/nav.js"></script>
+</body></html>
