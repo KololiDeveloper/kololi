@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Study tools - Kololi</title>
+<style>html body{padding-top:0!important}#kgs{display:none!important}
+body{font-family:Roboto,Arial,sans-serif;margin:0;background:#f4f9f8;color:#1f2d2b}
+.top{background:linear-gradient(135deg,#4cb97a,#2f9fb4);padding:18px 14px;color:#fff}.top h2{margin:0 0 4px}.top p{margin:0;font-size:14px;opacity:.9}
+.s{background:#fff;border-radius:16px;margin:14px;padding:14px;box-shadow:0 2px 10px rgba(20,60,50,.1)}
+.s h3{margin:0 0 10px;font-size:16px}
+.s input{width:100%;box-sizing:border-box;margin-bottom:8px;padding:11px;border:1px solid #d5e6e1;border-radius:10px;font-size:15px;background:#fbfdfc}
+.s button{border:0;border-radius:10px;padding:11px 14px;background:#2fa37a;color:#fff;font-weight:600;font-size:14px}
+.s button.g{background:#e8f4f0;color:#1d7f73}.s button.on{background:#1d7f73}
+.row{display:flex;gap:8px}.row>*{flex:1}
+#tm{font-size:54px;font-weight:700;text-align:center;margin:6px 0;letter-spacing:2px}
+.bar{height:12px;border-radius:6px;background:#e1eeea;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;width:0;background:#2fa37a}
+.st{display:flex;gap:8px;margin-top:8px}.st div{flex:1;text-align:center;background:#f1f8f6;border-radius:10px;padding:8px 4px;font-size:12px;color:#5b6b68}.st b{display:block;font-size:20px;color:#1f2d2b}
+.ex{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eef3f1}.ex span{font-size:13px;color:#5b6b68}.ex button{padding:6px 10px;background:#fdecea;color:#b04040}
+pre{white-space:pre-wrap;font-family:inherit;margin:8px 0;font-size:14px;line-height:1.45}
+small{color:#5b6b68}#msg{margin:0 14px 14px;color:#2f7d4f;font-weight:600}
+html.kdark .s{background:#182a26;color:#e6f2ee}html.kdark .s input{background:#122320;color:#e6f2ee;border-color:#2b4a43}html.kdark .st div{background:#122320;color:#9fb8b0}html.kdark .st b{color:#e6f2ee}html.kdark .s button.g{background:#1f3a34;color:#9fe3c0}</style></head><body>
+<div class="top"><h2>Study tools</h2><p>Timer, goals, exams, dictionary and citations</p></div>
+<div class="s"><h3>Focus timer</h3>
+<div class="row"><button id="mf" class="g on" onclick="setMode('focus')">Focus 25</button><button id="mb" class="g" onclick="setMode('break')">Break 5</button></div>
+<div id="tm">25:00</div>
+<div class="row"><button id="sb" onclick="toggle()">Start</button><button class="g" onclick="setMode(mode)">Reset</button></div>
+<small>The timer keeps counting if you leave the screen, but it can't beep while the app is closed.</small></div>
+<div class="s"><h3>Daily goal</h3>
+<div class="row"><input id="goal" type="number" min="5" max="600" placeholder="Minutes goal"><button onclick="saveGoal()">Set goal</button></div>
+<div class="bar"><i id="pb"></i></div>
+<div class="st"><div><b id="tmin">0</b>min today</div><div><b id="tses">0</b>sessions</div><div><b id="tstr">0</b>day streak</div></div></div>
+<div class="s"><h3>Exam countdown</h3>
+<input id="en" placeholder="Exam name (e.g. TLT 301)"><input id="ed" type="date"><button onclick="addExam()">Add exam</button><div id="exl"></div></div>
+<div class="s"><h3>Dictionary</h3>
+<div class="row"><input id="w" placeholder="Type an English word"><button onclick="look()">Look up</button></div>
+<pre id="dres"></pre><button id="lw" class="g" style="display:none" onclick="say($('w').value.trim())">🔊 Listen</button></div>
+<div class="s"><h3>Citation maker</h3>
+<input id="ca" placeholder="Author (e.g. Achebe, C.)"><input id="cy" placeholder="Year"><input id="ct" placeholder="Title"><input id="cp" placeholder="Publisher or website"><input id="cu" placeholder="Web address (optional)">
+<button onclick="cite()">Make citations</button>
+<pre id="cr"></pre><div class="row"><button class="g" onclick="cp(apa)">Copy APA</button><button class="g" onclick="cp(mla)">Copy MLA</button></div></div>
+<p id="msg"></p>
+<script>
+const $=id=>document.getElementById(id);
+function note(t){$("msg").textContent=t;setTimeout(()=>{$("msg").textContent=""},3000)}
+function load(){try{return JSON.parse(localStorage.getItem("kstudy"))||{days:{},goal:60,exams:[]}}catch(e){return{days:{},goal:60,exams:[]}}}
+function save(d){try{localStorage.setItem("kstudy",JSON.stringify(d))}catch(e){}}
+function today(){return new Date().toLocaleDateString("en-CA")}
+let mode="focus",left=1500,t=null,end=0;
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function showT(){$("tm").textContent=fmt(left)}
+function stop(){if(t){clearInterval(t);t=null}$("sb").textContent="Start"}
+function setMode(m){mode=m;left=(m==="focus"?25:5)*60;stop();showT();$("mf").className="g"+(m==="focus"?" on":"");$("mb").className="g"+(m==="break"?" on":"")}
+function toggle(){if(t){left=Math.max(0,Math.round((end-Date.now())/1000));stop();showT();return}
+end=Date.now()+left*1000;$("sb").textContent="Pause";
+t=setInterval(()=>{left=Math.max(0,Math.round((end-Date.now())/1000));showT();if(left<=0){stop();done()}},500)}
+function beep(){try{const a=new(window.AudioContext||window.webkitAudioContext)();const o=a.createOscillator();o.connect(a.destination);o.frequency.value=880;o.start();setTimeout(()=>{o.stop();a.close()},600)}catch(e){}}
+function done(){beep();try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}
+if(mode==="focus"){const d=load();const k=today();d.days[k]=d.days[k]||{min:0,ses:0};d.days[k].min+=25;d.days[k].ses+=1;save(d);stats();note("Great work! 25 minutes added.");setMode("break")}else{note("Break over.");setMode("focus")}}
+function stats(){const d=load();const k=today();const day=d.days[k]||{min:0,ses:0};
+$("tmin").textContent=day.min;$("tses").textContent=day.ses;$("goal").value=d.goal||60;
+$("pb").style.width=Math.min(100,Math.round(day.min/(d.goal||60)*100))+"%";
+let s=0,c=new Date();if(!(d.days[c.toLocaleDateString("en-CA")]||{}).min)c.setDate(c.getDate()-1);
+while((d.days[c.toLocaleDateString("en-CA")]||{}).min>0){s++;c.setDate(c.getDate()-1)}$("tstr").textContent=s}
+function saveGoal(){const g=parseInt($("goal").value,10);if(!g||g<5)return note("Enter a goal of 5 minutes or more.");const d=load();d.goal=g;save(d);stats();note("Goal saved.")}
+function exams(){const d=load();const l=$("exl");l.innerHTML="";
+d.exams.sort((a,b)=>a.d.localeCompare(b.d)).forEach((x,i)=>{const days=Math.ceil((new Date(x.d+"T00:00:00")-new Date(new Date().toDateString()))/86400000);
+const r=document.createElement("div");r.className="ex";const n=document.createElement("div");const b=document.createElement("b");b.textContent=x.n;const s=document.createElement("span");s.textContent=" "+(days<0?"passed":days===0?"today":days+" days left");
+n.appendChild(b);n.appendChild(s);const del=document.createElement("button");del.textContent="Remove";del.onclick=()=>{const dd=load();dd.exams=dd.exams.filter(e=>!(e.n===x.n&&e.d===x.d));save(dd);exams()};r.appendChild(n);r.appendChild(del);l.appendChild(r)})}
+function addExam(){const n=$("en").value.trim(),dt=$("ed").value;if(!n||!dt)return note("Add a name and a date.");const d=load();d.exams.push({n:n,d:dt});save(d);$("en").value="";$("ed").value="";exams()}
+async function look(){const w=$("w").value.trim();if(!w)return;$("dres").textContent="Looking up...";$("lw").style.display="none";
+try{const r=await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/"+encodeURIComponent(w));if(!r.ok){$("dres").textContent="No definition found.";return}
+const e=(await r.json())[0];let out=e.word+(e.phonetic?"   "+e.phonetic:"")+"\n";
+(e.meanings||[]).slice(0,3).forEach(m=>{out+="\n"+m.partOfSpeech+": "+(((m.definitions||[])[0]||{}).definition||"")});
+$("dres").textContent=out;$("lw").style.display="inline-block"}catch(x){$("dres").textContent="Could not load. Check your internet."}}
+function say(w){if(!w||!("speechSynthesis" in window))return;const u=new SpeechSynthesisUtterance(w);u.lang="en-GB";speechSynthesis.cancel();speechSynthesis.speak(u)}
+let apa="",mla="";
+function cite(){const a=$("ca").value.trim()||"Unknown author",y=$("cy").value.trim()||"n.d.",ti=$("ct").value.trim(),p=$("cp").value.trim(),u=$("cu").value.trim();
+if(!ti)return note("Add a title.");
+apa=a+" ("+y+"). "+ti+". "+(p?p+". ":"")+u;mla=a+'. "'+ti+'." '+(p?p+", ":"")+y+(u?", "+u:"")+".";
+$("cr").textContent="APA: "+apa+"\n\nMLA: "+mla}
+function cp(t){if(!t)return note("Make a citation first.");
+if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>note("Copied."),()=>note("Could not copy."))}else{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();try{document.execCommand("copy");note("Copied.")}catch(e){note("Could not copy.")}a.remove()}}
+stats();exams();
+</script>
+<script src="/nav.js"></script>
+</body></html>
